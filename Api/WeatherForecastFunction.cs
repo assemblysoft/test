@@ -3,6 +3,7 @@ using BlazorApp.Shared;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Invoice.Repository;
 
 namespace Api
 {
@@ -52,6 +53,27 @@ namespace Api
             }
 
             return summary;
+        }
+    }
+
+    public class InvoiceFunction
+    {
+        private readonly IInvoiceRepo _invoiceRepo;
+        private readonly ILogger _logger;
+
+        public InvoiceFunction(IInvoiceRepo invoiceRepo, ILoggerFactory loggerFactory)
+        {
+            _invoiceRepo = invoiceRepo;
+            _logger = loggerFactory.CreateLogger<InvoiceFunction>();
+        }
+
+        [Function("GetInvoices")]
+        public HttpResponseData GetInvoices([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "invoices")] HttpRequestData req)
+        {
+            var invoices = _invoiceRepo.GetInvoices();
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.WriteAsJsonAsync(invoices);
+            return response;
         }
     }
 }
